@@ -1,7 +1,11 @@
 ---
-title: "Machine Learning Final Project"
+title: Hey! Do you even lift (correctly) bro? OR Predicting correct manner of lifting
+  a dumbell using wearable gadgets
+author: "TribeTect"
 output: html_document
 ---
+## Introduction
+Devices such as Jawbone Up, Nike FuelBand, and Fitbit help collect large amounts of personal activity data. Beyond finding patterns in behavior, these devices can potentially help improve the form and manner of activity. These applications of correcting activity have tremendous potential in preventing injury or conducting forensics on activity-based events.
 
 ```{r initialize, echo=FALSE, warning=FALSE, message=FALSE}
 setwd("E:/Dropbox/Coursera/8. Machine Learning/project")
@@ -14,20 +18,18 @@ training_supplied <- read.csv("pml-training.csv")
 testing_supplied <- read.csv("pml-testing.csv")
 ```
 
+
 ## Objective 
-The goal of your project is to predict the manner in which they did the exercise. You may use any of the other variables to predict with. You should create a report describing how you built your model, how you used cross validation, what you think the expected out of sample error is, and why you made the choices you did. You will also use your prediction model to predict 20 different test cases.
+The goal of your project is to reliably predict the manner in which test subjects used a dumbell for exercise. There is one right way (Class A) and four incorrect manners (B - E)
 
 ## About the Dataset
+Data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants, asked to perform barbell lifts correctly and incorrectly, in 5 different ways. 
 
-Six young health participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions: exactly according to the specification (Class A), throwing the elbows to the front (Class B), lifting the dumbbell only halfway (Class C), lowering the dumbbell only halfway (Class D) and throwing the hips to the front (Class E).
-
-**Class A corresponds to the specified execution of the exercise, while the other 4 classes correspond to common mistakes.**
+These healthy participants performed one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions: exactly according to the specification (Class A), throwing the elbows to the front (Class B), lifting the dumbbell only halfway (Class C), lowering the dumbbell only halfway (Class D) and throwing the hips to the front (Class E).
 
 The model needs to predict the manner of exercise, given by the "classe" variable in the training set. There are **160 variables** in all and 19622 **data-points (rows)**.
 
 The **test data with 20 cases** without the classe variabe serves as the final prediction performance test for the model.
-
-
 
 ## Model Building
 To build a prediction model, choices were made to ensure an elegant model, selecting variables most-likely to contribute individually to the model, selecting a model, cross validating it. 
@@ -94,5 +96,35 @@ Comparing predictions for the 30% data set aside with actual classifications, wi
 
 ```{r predicting on test cases}
   predict(modFit, newdata=testing_supplied)
-  
 ```
+
+### Prediction using cross-validation
+
+Using cross-validation training method K Nearest Neighbors **DOUBLES** model performance and scored **100% accurate on the quiz** associated with the project 
+
+```{r CV based training}
+
+  modFitCV <- train(classe ~., data=training, method = "knn")
+  #modFitCV$finalModel
+  predictCV <- predict(modFitCV, newdata=testing)
+  confusionMatrix(predictCV,testing$classe)
+```
+### Prediction performance on the 20 test cases
+
+```{r predicting on test cases WITH cv}
+  predict(modFitCV, newdata=testing_supplied)
+```
+
+## Conclusion
+
+Predicting if the manner of exercise was correct or incorrect required both instinct and experimentations through validation modeling. The tree-based modeling gave the opportunity to fine tune the variables, initially selected through instinct and common knowledge on what makes a dumbell exercise right or wrong.
+
+The use of metrics in comparing relative performance of models is invaluable. K-folding technique revealed a far better prediction model compared to the popular random forest method. 
+
+## References
+More information is available from the website here: 
+[http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).] (http://groupware.les.inf.puc-rio.br/har)
+
+## Acknowledgements
+
+[The data for this project comes from Catholic Public University in Rio de Janeiro (PUC) More information at http://groupware.les.inf.puc-rio.br/har] (http://groupware.les.inf.puc-rio.br/har)
