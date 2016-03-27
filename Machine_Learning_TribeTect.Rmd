@@ -1,0 +1,98 @@
+---
+title: "Machine Learning Final Project"
+output: html_document
+---
+
+```{r initialize, echo=FALSE, warning=FALSE, message=FALSE}
+setwd("E:/Dropbox/Coursera/8. Machine Learning/project")
+
+set.seed(22398)
+
+invisible(lapply(list("caret", "ggplot2", "rpart", "rattle"), require, character.only=TRUE))
+
+training_supplied <- read.csv("pml-training.csv")
+testing_supplied <- read.csv("pml-testing.csv")
+```
+
+## Objective 
+The goal of your project is to predict the manner in which they did the exercise. You may use any of the other variables to predict with. You should create a report describing how you built your model, how you used cross validation, what you think the expected out of sample error is, and why you made the choices you did. You will also use your prediction model to predict 20 different test cases.
+
+## About the Dataset
+
+Six young health participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions: exactly according to the specification (Class A), throwing the elbows to the front (Class B), lifting the dumbbell only halfway (Class C), lowering the dumbbell only halfway (Class D) and throwing the hips to the front (Class E).
+
+**Class A corresponds to the specified execution of the exercise, while the other 4 classes correspond to common mistakes.**
+
+The model needs to predict the manner of exercise, given by the "classe" variable in the training set. There are **160 variables** in all and 19622 **data-points (rows)**.
+
+The **test data with 20 cases** without the classe variabe serves as the final prediction performance test for the model.
+
+
+
+## Model Building
+To build a prediction model, choices were made to ensure an elegant model, selecting variables most-likely to contribute individually to the model, selecting a model, cross validating it. 
+
+To build the model for predicting manner of exercise being performed, we rejected variables least related to exercise class. 
+
+The caret package was used for model training and improvement.
+
+
+### Choices made to approach the problem
+Amongst the 159 variables, choices were made to eliminate variables likely unrelated to the exercise class variables.
+
+* Variables with mostly "NA" data were eliminated with visual inspection of the training data as a table
+* Individual components (x,y,z) are ignored in favor of **total_** type variables
+* Variables measured in degrees were initially ignored 
+* Arm and forearm are common visual predictors of dumbell exercise manner per student's expert judgement  
+
+Initial predictor set: Total arm acceleration, total dumbell acceleration, total belt acceleration
+
+```{r echo=FALSE}
+selected_variables <- c("total_accel_arm", "total_accel_belt", "roll_forearm", "pitch_forearm", "yaw_forearm", "roll_arm", "pitch_arm", "yaw_arm","gyros_forearm_z", "roll_dumbbell", "pitch_dumbbell", "yaw_dumbbell")
+
+training_supplied <- training_supplied[,c("classe",selected_variables)]
+testing_supplied <- testing_supplied[,selected_variables]
+
+```
+
+
+### Cross Validation
+To validate the model before trying it on the supplied test data the supplied training data set was split into training and testing sets, in the ratio 7:3. 
+
+```{r load data, echo=TRUE, message=FALSE}
+inTrain <- createDataPartition(y=training_supplied$classe, p=0.7, list=FALSE)
+training <- training_supplied[inTrain,]
+testing <- training_supplied[-inTrain,]
+```
+
+### Preprocessing
+As we trained the model preprocessing for scale and center to normalize the data did not increase the model accuracy significantly. So tree-based prediction was used **without preprocessing.**
+
+### Model training with Trees
+```{r model training}
+modFit <- train(classe ~., data=training, method="rpart") # Trees (accuracy in 0.30s)
+#modFit$finalModel
+
+fancyRpartPlot(modFit$finalModel)
+modFit$finalModel
+```
+
+### Expected out of sample error rate
+
+This is where we examine the fitness of the model to the data that was not used to train the model. The confusion matrix indicates the performance of the model internally.
+
+Comparing predictions for the 30% data set aside with actual classifications, will reveal the efficacy of this model.
+
+```{r confusion matrix}
+  predicted_manner <- predict(modFit, newdata=testing)
+  #summary(predicted_manner)
+  confusionMatrix(testing$classe, predicted_manner)
+```
+
+
+### Prediction performance on the 20 test cases
+
+```{r predicting on test cases}
+  predict(modFit, newdata=testing_supplied)
+  
+```
